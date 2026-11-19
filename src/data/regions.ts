@@ -37,7 +37,7 @@ export const REGIONS: Region[] = [
     vulnerableShare: 0.31,
     profile: {
       waterTrend: 0.0042,
-      waterCapacityFactor: 1.2,
+      waterCapacityFactor: 1.1,
       energyTrend: 0.002,
       energyCapacityFactor: 1.25,
       wasteTrend: 0.001,

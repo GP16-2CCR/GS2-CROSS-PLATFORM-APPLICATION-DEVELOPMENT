@@ -13,7 +13,7 @@ Antes de começar: abra o app no Expo Go **com internet**, para carregar o clima
 - Mostre a demanda por serviços e o aviso de que os dados de consumo são sintéticos.
 
 ## 3. Alerta explicável (1 min 30 s)
-- Toque em **"Risco de desabastecimento de água"**.
+- Toque no **alerta de água** (ícone de gota, crítico).
 - Leia a **justificativa** (números calculados), a **confiança** (com a fórmula) e as **limitações**.
 - Destaque o banner: *"Apoio à decisão, não decisão automática"*.
 

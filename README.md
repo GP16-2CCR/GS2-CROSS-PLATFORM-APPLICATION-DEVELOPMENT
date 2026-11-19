@@ -83,7 +83,7 @@ O grupo combinou **dividir as Global Solutions do semestre entre os integrantes*
 - Os gráficos têm uma **descrição textual completa** para leitores de tela (TalkBack/VoiceOver).
 - Severidade **nunca é indicada só por cor**: sempre há ícone e texto.
 - **Modo alto contraste** e **texto ampliado (+20%)**, além de respeitar a escala de fonte do sistema.
-- Áreas de toque de no mínimo 48 dp. Erros de formulário são anunciados (`accessibilityLiveRegion`).
+- Áreas de toque entre 40 e 48 dp (botões principais com 48 dp). Erros de formulário são anunciados (`accessibilityLiveRegion`).
 
 ### Privacidade (LGPD: minimização e finalidade)
 
