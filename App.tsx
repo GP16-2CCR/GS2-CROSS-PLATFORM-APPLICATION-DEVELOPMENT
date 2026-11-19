@@ -1,20 +1,33 @@
+import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AppProvider, useApp } from './src/context/AppContext';
+import { RootNavigator } from './src/navigation/RootNavigator';
+import { AppText } from './src/components/AppText';
+
+function Root() {
+  const { state, theme } = useApp();
+  if (!state.hydrated) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primary, gap: 12 }}>
+        <ActivityIndicator size="large" color={theme.colors.primaryText} accessibilityLabel="Carregando dados salvos" />
+        <AppText tone="inverse" weight="bold" variant="subtitle">
+          Radar Territorial
+        </AppText>
+      </View>
+    );
+  }
+  return <RootNavigator />;
+}
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <AppProvider>
+        <StatusBar style="light" />
+        <Root />
+      </AppProvider>
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
