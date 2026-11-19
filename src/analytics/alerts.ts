@@ -98,6 +98,39 @@ function forecastDays(weather: WeatherData | null) {
   return weather.days.slice(weather.todayIndex, weather.todayIndex + FORECAST_DAYS);
 }
 
+export type MetricKey = 'water' | 'energy' | 'waste';
+
+export type MetricProjection = {
+  forecast: number[];
+  peak: number;
+  /** Fator multiplicativo aplicado pelo clima previsto (1 = sem ajuste). */
+  climateFactor: number;
+  hotDays: number;
+  maxTemp: number;
+  slope: number;
+  r2: number;
+  n: number;
+};
+
+/**
+ * Projeção de 7 dias usada TANTO pelos alertas quanto pelos gráficos do painel,
+ * garantindo que os números exibidos sejam os mesmos:
+ * regressão linear × fator climático (água: +1,5% por dia ≥ 30 °C; energia: +2% por °C acima de 28 °C).
+ */
+export function projectMetric(metric: MetricKey, series: RegionSeries, weather: WeatherData | null): MetricProjection {
+  const values = series[metric].map((p) => p.value);
+  const reg = linearRegression(values);
+  const fdays = forecastDays(weather);
+  const temps = fdays.map((d) => d.tMax).filter(Number.isFinite);
+  const maxTemp = temps.length ? Math.max(...temps) : NaN;
+  const hotDays = fdays.filter((d) => d.tMax >= 30).length;
+  let climateFactor = 1;
+  if (metric === 'water') climateFactor = 1 + 0.015 * hotDays;
+  if (metric === 'energy' && Number.isFinite(maxTemp)) climateFactor = 1 + 0.02 * Math.max(0, maxTemp - 28);
+  const forecast = project(reg, FORECAST_DAYS).map((v) => v * climateFactor);
+  return { forecast, peak: Math.max(...forecast), climateFactor, hotDays, maxTemp, slope: reg.slope, r2: reg.r2, n: reg.n };
+}
+
 type Ctx = {
   region: Region;
   series: RegionSeries;
@@ -111,10 +144,7 @@ const idFor = (ctx: Ctx, theme: string) => `${ctx.region.id}:${theme}:${ctx.date
 function waterAlert(ctx: Ctx): Alert | null {
   const values = ctx.series.water.map((p) => p.value);
   const reg = linearRegression(values);
-  const proj = project(reg, FORECAST_DAYS);
-  const hotDays = forecastDays(ctx.weather).filter((d) => d.tMax >= 30).length;
-  const heatAdj = 1 + 0.015 * hotDays;
-  const peak = Math.max(...proj) * heatAdj;
+  const { peak, hotDays } = projectMetric('water', ctx.series, ctx.weather);
   const cap = ctx.series.capacity.water;
   const ratio = peak / cap;
   const severity = capacitySeverity(ratio, reg.slope);
@@ -158,11 +188,7 @@ function waterAlert(ctx: Ctx): Alert | null {
 function energyAlert(ctx: Ctx): Alert | null {
   const values = ctx.series.energy.map((p) => p.value);
   const reg = linearRegression(values);
-  const proj = project(reg, FORECAST_DAYS);
-  const fdays = forecastDays(ctx.weather);
-  const maxT = fdays.length ? Math.max(...fdays.map((d) => d.tMax).filter(Number.isFinite)) : NaN;
-  const heatFactor = Number.isFinite(maxT) ? 1 + 0.02 * Math.max(0, maxT - 28) : 1;
-  const peak = Math.max(...proj) * heatFactor;
+  const { peak, maxTemp: maxT, climateFactor: heatFactor } = projectMetric('energy', ctx.series, ctx.weather);
   const cap = ctx.series.capacity.energy;
   const ratio = peak / cap;
   const severity = capacitySeverity(ratio, reg.slope);
@@ -211,7 +237,7 @@ function energyAlert(ctx: Ctx): Alert | null {
 function wasteAlert(ctx: Ctx): Alert | null {
   const values = ctx.series.waste.map((p) => p.value);
   const reg = linearRegression(values);
-  const peak = Math.max(...project(reg, FORECAST_DAYS));
+  const { peak } = projectMetric('waste', ctx.series, ctx.weather);
   const cap = ctx.series.capacity.waste;
   const ratio = peak / cap;
   const severity = capacitySeverity(ratio, reg.slope);

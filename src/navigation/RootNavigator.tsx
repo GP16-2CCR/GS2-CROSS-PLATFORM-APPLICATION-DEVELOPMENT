@@ -1,5 +1,5 @@
 import React from 'react';
-import { DefaultTheme, NavigationContainer, Theme as NavTheme } from '@react-navigation/native';
+import { DefaultTheme, LinkingOptions, NavigationContainer, Theme as NavTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,21 @@ import { RecordsScreen } from '../screens/RecordsScreen';
 import { NewReportScreen } from '../screens/NewReportScreen';
 import { RegionPickerScreen } from '../screens/RegionPickerScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+
+/** Deep links (também usados como URLs na versão web). */
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ['radarterritorial://'],
+  config: {
+    screens: {
+      Tabs: {
+        screens: { Painel: '', Alertas: 'alertas', Registros: 'registros', Ajustes: 'ajustes' },
+      },
+      AlertDetail: 'alerta/:alertId',
+      NewReport: 'novo-registro',
+      RegionPicker: 'territorio',
+    },
+  },
+};
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -77,7 +92,7 @@ export function RootNavigator() {
     },
   };
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer theme={navTheme} linking={linking}>
       <Stack.Navigator
         screenOptions={{
           headerStyle: { backgroundColor: t.colors.primary },

@@ -12,8 +12,8 @@ import { KpiCard } from '../components/Indicators';
 import { AlertCard } from '../components/AlertCard';
 import { Button } from '../components/Button';
 import { ChipGroup } from '../components/FormControls';
-import { FORECAST_DAYS } from '../analytics/alerts';
-import { linearRegression, mean, pctChange, project } from '../analytics/stats';
+import { FORECAST_DAYS, projectMetric } from '../analytics/alerts';
+import { mean, pctChange } from '../analytics/stats';
 import { DEMAND_LABELS, DemandCategory } from '../types';
 import { formatNumber, formatPercent, formatShortDate, timeAgo } from '../utils/format';
 
@@ -46,12 +46,11 @@ export function DashboardScreen() {
   const chart = useMemo(() => {
     const pts = series[metric];
     const values = pts.map((p) => p.value);
-    const reg = linearRegression(values);
-    const forecast = project(reg, FORECAST_DAYS);
+    const w = weather.data && weather.data.regionId === region.id ? weather.data : null;
+    const { forecast, peak, climateFactor } = projectMetric(metric, series, w);
     const cap = series.capacity[metric];
-    const peak = Math.max(...forecast);
-    return { values, forecast, cap, peak, start: pts[0].date, end: pts[pts.length - 1].date };
-  }, [series, metric]);
+    return { values, forecast, cap, peak, climateFactor, start: pts[0].date, end: pts[pts.length - 1].date };
+  }, [series, metric, weather.data, region.id]);
 
   const demandBars = useMemo(() => {
     const flagged = new Set(alerts.filter((a) => a.theme === 'demanda').map((a) => a.id.split(':')[1].replace('demanda-', '')));
@@ -170,7 +169,7 @@ export function DashboardScreen() {
 
       {/* Tendência */}
       <Card>
-        <SectionTitle title="Tendência e projeção" subtitle="30 dias de histórico + 7 dias projetados (regressão linear)" />
+        <SectionTitle title="Tendência e projeção" subtitle="30 dias de histórico + 7 dias projetados (regressão linear + clima previsto)" />
         <ChipGroup<Metric>
           label="Indicador exibido"
           value={metric}
@@ -199,7 +198,8 @@ export function DashboardScreen() {
           ]}
         />
         <AppText variant="small" tone="muted">
-          Pico projetado: {formatNumber(chart.peak, info.decimals)} {info.unit} ({formatPercent((chart.peak / chart.cap) * 100)} da capacidade).
+          Pico projetado: {formatNumber(chart.peak, info.decimals)} {info.unit} ({formatPercent((chart.peak / chart.cap) * 100)} da capacidade)
+          {chart.climateFactor > 1 ? `, incluindo ajuste climático de +${formatNumber((chart.climateFactor - 1) * 100, 1)}% pela previsão do tempo.` : '.'}
         </AppText>
       </Card>
 
