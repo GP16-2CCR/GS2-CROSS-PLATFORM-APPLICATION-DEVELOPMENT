@@ -27,6 +27,9 @@
     },
     "description": "Painel de inteligência territorial para apoio à decisão de gestores públicos.",
     "primaryColor": "#0B4F6C",
-    "scheme": "radarterritorial"
+    "scheme": "radarterritorial",
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
